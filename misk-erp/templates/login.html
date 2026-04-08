@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISK ERP — Hyrja</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+  body {
+    background: #0f0f11;
+    color: #f0f0f4;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 16px;
+  }
+  .card {
+    background: #18181c;
+    border: 1px solid #2a2a32;
+    border-radius: 24px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .input {
+    background: #212127;
+    border: 1px solid #2a2a32;
+    border-radius: 12px;
+    padding: 16px 18px;
+    color: #f0f0f4;
+    font-size: 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    margin-top: 8px;
+  }
+  .input:focus { border-color: #7c6aff; }
+  .label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #7a7a8c; }
+  .btn {
+    background: #7c6aff;
+    color: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .error { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 14px 18px; border-radius: 12px; font-size: 14px; margin-bottom: 24px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #7c6aff; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="margin-bottom: 36px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div class="dot"></div>
+      <span style="font-size:24px;font-weight:700;letter-spacing:-0.5px;">MISK ERP</span>
+    </div>
+    <p style="color:#7a7a8c;font-size:14px;margin:0;">Sistemi i menaxhimit të kompanisë</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="error">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div style="margin-bottom:20px;">
+      <label class="label">Përdoruesi</label>
+      <input class="input" type="text" name="username" placeholder="Admin" autofocus autocomplete="username">
+    </div>
+    <div style="margin-bottom:28px;">
+      <label class="label">Fjalëkalimi</label>
+      <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn" type="submit">Hyr në sistem →</button>
+  </form>
+
+  <p style="text-align:center;color:#3a3a42;font-size:12px;margin-top:32px;margin-bottom:0;">MISK © 2024 — Internal Use Only</p>
+</div>
+</body>
+</html>

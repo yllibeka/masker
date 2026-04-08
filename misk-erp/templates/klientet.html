@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Klientët — MISK ERP{% endblock %}
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:gap;">
+  <div>
+    <h1 style="font-size:28px;font-weight:700;letter-spacing:-0.5px;margin:0;">Klientët</h1>
+    <p style="color:var(--muted);margin-top:4px;margin-bottom:0;">{{ klientet|length }} klientë gjithsej</p>
+  </div>
+  <a href="{{ url_for('shto_klient') }}" class="btn-primary">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Klient i Ri
+  </a>
+</div>
+
+<!-- Search -->
+<form method="GET" style="margin-bottom:24px;">
+  <input class="input" name="q" value="{{ q }}" placeholder="🔍  Kërko sipas emrit ose telefonit..." style="max-width:400px;">
+</form>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  {% if klientet %}
+  <div>
+    {% for k in klientet %}
+    <a href="{{ url_for('profili_klientit', id=k.id) }}" style="text-decoration:none;">
+    <div class="table-row" style="padding:18px 24px;display:flex;align-items:center;gap:16px;">
+      <div style="width:40px;height:40px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:15px;flex-shrink:0;">
+        {{ k.emri[0] }}{{ k.mbiemri[0] }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;color:var(--text);">{{ k.emri }} {{ k.mbiemri }}</div>
+        <div style="font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ k.adresa or 'Pa adresë' }}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:500;color:var(--text);" class="mono">{{ k.telefoni or '—' }}</div>
+        <div style="font-size:12px;color:var(--muted);">{{ k.tepihat|length }} tepiha</div>
+      </div>
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--border)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="padding:64px;text-align:center;color:var(--muted);">
+    <div style="font-size:48px;margin-bottom:16px;">👥</div>
+    <div style="font-size:16px;font-weight:500;margin-bottom:8px;">Nuk u gjetën klientë</div>
+    <div style="font-size:14px;">{% if q %}Provo kërkimin tjetër.{% else %}Shto klientin e parë!{% endif %}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

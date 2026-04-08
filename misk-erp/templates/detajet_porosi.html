@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Porosia #{{ "%04d"|format(porosi.id) }} — MISK ERP{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+  <a href="{{ url_for('porositë') }}" class="btn-ghost" style="padding:8px 14px;font-size:13px;">← Porositë</a>
+  <div style="flex:1;">
+    <h1 style="font-size:24px;font-weight:700;margin:0;">Porosia <span class="mono">#{{ "%04d"|format(porosi.id) }}</span></h1>
+    <p style="color:var(--muted);margin-top:4px;margin-bottom:0;">{{ porosi.data_marrjes.strftime('%d %B %Y') }}</p>
+  </div>
+  <form method="POST" action="{{ url_for('fshi_porosi', id=porosi.id) }}" onsubmit="return confirm('Fshi porosinë?')">
+    <button type="submit" class="btn-danger">Fshi</button>
+  </form>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:24px;">
+  <!-- Left -->
+  <div>
+    <!-- Status Change -->
+    <div class="card" style="padding:24px;margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Statusi i Porosisë</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        {% for s in statuset %}
+        {% set active = porosi.statusi == s %}
+        <form method="POST" action="{{ url_for('ndrysho_statusin', id=porosi.id) }}" style="display:inline;">
+          <input type="hidden" name="statusi" value="{{ s }}">
+          <button type="submit" style="padding:10px 16px;border-radius:10px;font-size:14px;font-weight:{% if active %}600{% else %}500{% endif %};cursor:pointer;border:2px solid {% if active %}var(--accent){% else %}var(--border){% endif %};background:{% if active %}var(--accent){% else %}transparent{% endif %};color:{% if active %}white{% else %}var(--muted){% endif %};transition:all 0.15s;">
+            {{ s }}
+          </button>
+        </form>
+        {% endfor %}
+      </div>
+      <!-- Progress Bar -->
+      {% set steps = ['U mor', 'Në Matje', 'Larje', 'Tharje', 'Paketim', 'Gati'] %}
+      {% set curr_idx = steps.index(porosi.statusi) if porosi.statusi in steps else 0 %}
+      <div style="display:flex;gap:4px;margin-top:8px;">
+        {% for i in range(steps|length) %}
+        <div style="flex:1;height:4px;border-radius:4px;background:{% if i <= curr_idx %}var(--accent){% else %}var(--border){% endif %};transition:background 0.3s;"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Tepihat -->
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);">
+        <h2 style="font-size:16px;font-weight:600;margin:0;">Tepihat në këtë Porosi</h2>
+      </div>
+      {% for a in porosi.artikujt %}
+      <div class="table-row" style="padding:16px 24px;display:flex;align-items:center;gap:16px;">
+        <div style="flex:1;">
+          <div style="font-weight:500;">{{ a.tepih.pershkrimi }}</div>
+          <div style="font-size:13px;color:var(--muted);" class="mono">{{ a.tepih.gjatesia }}m × {{ a.tepih.gjeresia }}m = {{ a.tepih.m2 }} m²</div>
+        </div>
+        <div style="font-weight:700;" class="mono">€{{ "%.2f"|format(a.cmimi_snapshot) }}</div>
+      </div>
+      {% endfor %}
+      <div style="padding:16px 24px;background:var(--surface2);display:flex;justify-content:space-between;">
+        <span style="color:var(--muted);">{{ porosi.artikujt|length }} tepiha</span>
+        <span style="font-weight:700;font-size:20px;" class="mono">€{{ "%.2f"|format(porosi.cmimi_total) }}</span>
+      </div>
+    </div>
+
+    {% if porosi.shenimet %}
+    <div class="card" style="padding:20px 24px;">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px;">Shënime</div>
+      <p style="margin:0;color:var(--text);">{{ porosi.shenimet }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Client Info -->
+  <div>
+    <div class="card" style="padding:24px;">
+      <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Klienti</div>
+      <a href="{{ url_for('profili_klientit', id=porosi.klienti.id) }}" style="text-decoration:none;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:12px;margin-bottom:16px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:16px;">
+            {{ porosi.klienti.emri[0] }}{{ porosi.klienti.mbiemri[0] }}
+          </div>
+          <div>
+            <div style="font-weight:600;color:var(--text);">{{ porosi.klienti.emri }} {{ porosi.klienti.mbiemri }}</div>
+            <div style="font-size:13px;color:var(--accent);">Shiko profilin →</div>
+          </div>
+        </div>
+      </a>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;">
+          <span style="color:var(--muted);">Telefoni</span>
+          <span class="mono">{{ porosi.klienti.telefoni or '—' }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;">
+          <span style="color:var(--muted);">Marrja</span>
+          <span>{{ porosi.data_marrjes.strftime('%d %b %Y') }}</span>
+        </div>
+        {% if porosi.data_dorezimit %}
+        <div style="display:flex;justify-content:space-between;font-size:14px;">
+          <span style="color:var(--muted);">Dorëzimi</span>
+          <span style="color:var(--green);">{{ porosi.data_dorezimit.strftime('%d %b %Y') }}</span>
+        </div>
+        {% endif %}
+        <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+          <span style="font-size:14px;color:var(--muted);">Total</span>
+          <span style="font-size:22px;font-weight:700;" class="mono">€{{ "%.2f"|format(porosi.cmimi_total) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

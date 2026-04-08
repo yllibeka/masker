@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Porosi e Re — MISK ERP{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+  <a href="{{ url_for('porositë') }}" class="btn-ghost" style="padding:8px 14px;font-size:13px;">← Porositë</a>
+  <h1 style="font-size:24px;font-weight:700;margin:0;">Porosi e Re</h1>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;max-width:900px;">
+  <!-- Main Form -->
+  <div>
+    <form method="POST" id="porosi-form">
+      <!-- Klienti -->
+      <div class="card" style="padding:24px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">1. Zgjidhni Klientin</div>
+        <div>
+          <label class="label">Klienti</label>
+          <select class="input" name="client_id" id="client-select" required onchange="loadTepihat(this.value)">
+            <option value="">— Zgjidhni klientin —</option>
+            {% for k in klientet %}
+            <option value="{{ k.id }}" {% if request.args.get('client_id')|int == k.id %}selected{% endif %}>
+              {{ k.emri }} {{ k.mbiemri }} ({{ k.telefoni or 'pa tel.' }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Tepihat -->
+      <div class="card" style="padding:24px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">2. Zgjidhni Tepihat</div>
+        <div id="tepihat-container">
+          <div style="padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--border);border-radius:12px;">
+            <div style="font-size:24px;margin-bottom:8px;">🏠</div>
+            <div>Zgjidhni klientin për të parë tepihat</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data & Shënime -->
+      <div class="card" style="padding:24px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">3. Detajet</div>
+        <div style="margin-bottom:16px;">
+          <label class="label">Data e Marrjes</label>
+          <input class="input" type="date" name="data_marrjes" value="{{ today }}" required>
+        </div>
+        <div>
+          <label class="label">Shënime (opsionale)</label>
+          <textarea class="input" name="shenimet" rows="3" placeholder="Shënimet e posaçme..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center;font-size:17px;padding:16px;">
+        Krijo Porosinë →
+      </button>
+    </form>
+  </div>
+
+  <!-- Summary -->
+  <div>
+    <div class="card" style="padding:24px;position:sticky;top:24px;">
+      <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:20px;">Përmbledhja</div>
+      <div id="summary-list" style="margin-bottom:16px;">
+        <div style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0;">Nuk keni zgjedhur asnjë tepih</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:14px;color:var(--muted);">Total</span>
+        <span style="font-size:28px;font-weight:700;letter-spacing:-0.5px;" class="mono" id="total-price">€0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedTepihat = {};
+
+async function loadTepihat(clientId) {
+  const container = document.getElementById('tepihat-container');
+  if (!clientId) {
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--border);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">🏠</div><div>Zgjidhni klientin për të parë tepihat</div></div>';
+    selectedTepihat = {};
+    updateSummary();
+    return;
+  }
+
+  container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted);">Duke ngarkuar...</div>';
+  selectedTepihat = {};
+
+  const res = await fetch(`/api/klient/${clientId}/tepihat`);
+  const tepihat = await res.json();
+
+  if (!tepihat.length) {
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--border);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">⚠️</div><div>Ky klient nuk ka tepiha. Shto tepihat tek profili i klientit!</div></div>';
+    return;
+  }
+
+  container.innerHTML = tepihat.map(t => `
+    <label onclick="toggleTepih(${t.id}, ${t.cmimi_total})" style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;cursor:pointer;border:2px solid var(--border);margin-bottom:10px;transition:border-color 0.15s,background 0.15s;" id="label-${t.id}">
+      <input type="checkbox" name="tepih_ids" value="${t.id}" style="display:none;" id="chk-${t.id}">
+      <div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s;" id="box-${t.id}"></div>
+      <div style="flex:1;">
+        <div style="font-weight:600;">${t.pershkrimi}</div>
+        <div style="font-size:13px;color:var(--muted);" >${t.gjatesia}m × ${t.gjeresia}m = <strong>${t.m2} m²</strong></div>
+      </div>
+      <div style="font-weight:700;" class="mono">€${t.cmimi_total.toFixed(2)}</div>
+    </label>
+  `).join('');
+
+  updateSummary();
+}
+
+function toggleTepih(id, price) {
+  const chk = document.getElementById('chk-' + id);
+  const box = document.getElementById('box-' + id);
+  const label = document.getElementById('label-' + id);
+
+  chk.checked = !chk.checked;
+  if (chk.checked) {
+    selectedTepihat[id] = price;
+    box.style.background = 'var(--accent)';
+    box.style.borderColor = 'var(--accent)';
+    box.innerHTML = '<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    label.style.borderColor = 'var(--accent)';
+    label.style.background = 'var(--accent-soft)';
+  } else {
+    delete selectedTepihat[id];
+    box.style.background = '';
+    box.style.borderColor = 'var(--border)';
+    box.innerHTML = '';
+    label.style.borderColor = 'var(--border)';
+    label.style.background = '';
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  const ids = Object.keys(selectedTepihat);
+  const total = ids.reduce((s, id) => s + selectedTepihat[id], 0);
+
+  const list = document.getElementById('summary-list');
+  if (!ids.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0;">Nuk keni zgjedhur asnjë tepih</div>';
+  } else {
+    list.innerHTML = ids.map(id => {
+      const label = document.getElementById('label-' + id);
+      const name = label.querySelector('div > div:first-child').textContent;
+      return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+        <span style="color:var(--text);">${name}</span>
+        <span class="mono" style="font-weight:600;">€${selectedTepihat[id].toFixed(2)}</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('total-price').textContent = '€' + total.toFixed(2);
+}
+
+// Load if pre-selected client
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('client-select');
+  if (sel.value) loadTepihat(sel.value);
+});
+</script>
+
+{% endblock %}

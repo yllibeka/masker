@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}{{ klient.emri }} {{ klient.mbiemri }} — MISK ERP{% endblock %}
+{% block content %}
+
+<!-- Header -->
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+  <a href="{{ url_for('klientet') }}" class="btn-ghost" style="padding:8px 14px;font-size:13px;">← Klientët</a>
+  <div style="flex:1;">
+    <h1 style="font-size:28px;font-weight:700;letter-spacing:-0.5px;margin:0;">{{ klient.emri }} {{ klient.mbiemri }}</h1>
+    <p style="color:var(--muted);margin-top:4px;margin-bottom:0;">ID #{{ "%04d"|format(klient.id) }} · Klient që nga {{ klient.created_at.strftime('%b %Y') }}</p>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a href="{{ url_for('edito_klient', id=klient.id) }}" class="btn-ghost">Edito</a>
+    <form method="POST" action="{{ url_for('fshi_klient', id=klient.id) }}" onsubmit="return confirm('A jeni i sigurt? Do të fshihen edhe të gjithë tepihat!')">
+      <button type="submit" class="btn-danger">Fshi</button>
+    </form>
+  </div>
+</div>
+
+<!-- Info + New Order -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+  <div class="card" style="padding:24px;">
+    <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Të dhënat</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--muted);font-size:14px;">Telefoni</span>
+        <span style="font-weight:500;" class="mono">{{ klient.telefoni or '—' }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--muted);font-size:14px;">Adresa</span>
+        <span style="font-weight:500;text-align:right;max-width:200px;">{{ klient.adresa or '—' }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--muted);font-size:14px;">Tepiha</span>
+        <span style="font-weight:500;color:var(--accent);">{{ klient.tepihat|length }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--muted);font-size:14px;">Porosi</span>
+        <span style="font-weight:500;">{{ porositë|length }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:12px;justify-content:center;">
+    <div style="font-size:15px;font-weight:500;margin-bottom:4px;">Veprime të shpejta</div>
+    <a href="{{ url_for('shto_porosi') }}?client_id={{ klient.id }}" class="btn-primary" style="justify-content:center;">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Porosi e Re
+    </a>
+  </div>
+</div>
+
+<!-- Tepihat -->
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:28px;">
+  <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="font-size:16px;font-weight:600;margin:0;">Tepihat e Klientit</h2>
+    <button onclick="document.getElementById('modal-tepih').style.display='flex'" class="btn-primary" style="padding:8px 16px;font-size:13px;">
+      + Shto Tepih
+    </button>
+  </div>
+  {% if klient.tepihat %}
+  <div>
+    {% for t in klient.tepihat %}
+    <div class="table-row" style="padding:16px 24px;display:flex;align-items:center;gap:16px;">
+      <div style="flex:1;">
+        <div style="font-weight:500;">{{ t.pershkrimi }}</div>
+        <div style="font-size:13px;color:var(--muted);" class="mono">{{ t.gjatesia }}m × {{ t.gjeresia }}m = <strong>{{ t.m2 }} m²</strong></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:600;" class="mono">€{{ "%.2f"|format(t.cmimi_total) }}</div>
+        <div style="font-size:12px;color:var(--muted);">€{{ t.cmimi_per_m2 }}/m²</div>
+      </div>
+      <form method="POST" action="{{ url_for('fshi_tepih', id=t.id) }}" onsubmit="return confirm('Fshi tepihun?')">
+        <button type="submit" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;line-height:0;" title="Fshi">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+    <!-- Total -->
+    <div style="padding:16px 24px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;color:var(--muted);">Total {{ klient.tepihat|length }} tepiha · {{ klient.tepihat|sum(attribute='m2')|round(2) }} m²</span>
+      <span style="font-weight:700;font-size:18px;" class="mono">€{{ "%.2f"|format(klient.tepihat|sum(attribute='cmimi_total')) }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div style="padding:40px;text-align:center;color:var(--muted);">
+    <div style="font-size:36px;margin-bottom:12px;">🏠</div>
+    <div>Ky klient nuk ka tepiha ende.</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Porositë e klientit -->
+{% if porositë %}
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="padding:20px 24px;border-bottom:1px solid var(--border);">
+    <h2 style="font-size:16px;font-weight:600;margin:0;">Historia e Porosive</h2>
+  </div>
+  {% for p in porositë %}
+  <a href="{{ url_for('detajet_porosise', id=p.id) }}" style="text-decoration:none;">
+  <div class="table-row" style="padding:14px 24px;display:flex;align-items:center;gap:16px;">
+    <div style="font-size:12px;color:var(--muted);" class="mono">#{{ "%04d"|format(p.id) }}</div>
+    <div style="flex:1;">
+      <div style="font-weight:500;color:var(--text);">{{ p.data_marrjes.strftime('%d %b %Y') }}</div>
+      <div style="font-size:12px;color:var(--muted);">{{ p.artikujt|length }} tepiha</div>
+    </div>
+    {% set st = p.statusi %}
+    {% if st == 'U mor' %}<span class="badge status-u-mor">{{ st }}</span>
+    {% elif st == 'Në Matje' %}<span class="badge status-matje">{{ st }}</span>
+    {% elif st == 'Larje' %}<span class="badge status-larje">{{ st }}</span>
+    {% elif st == 'Tharje' %}<span class="badge status-tharje">{{ st }}</span>
+    {% elif st == 'Paketim' %}<span class="badge status-paketim">{{ st }}</span>
+    {% elif st == 'Gati' %}<span class="badge status-gati">{{ st }}</span>{% endif %}
+    <div style="font-weight:600;" class="mono">€{{ "%.2f"|format(p.cmimi_total) }}</div>
+  </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Modal: Shto Tepih -->
+<div id="modal-tepih" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:440px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <h3 style="font-size:18px;font-weight:600;margin:0;">Shto Tepih të Ri</h3>
+      <button onclick="document.getElementById('modal-tepih').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('shto_tepih', client_id=klient.id) }}">
+      <div style="margin-bottom:16px;">
+        <label class="label">Përshkrimi</label>
+        <input class="input" name="pershkrimi" placeholder="psh. Tepihu i Sallonit" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+          <label class="label">Gjatësia (m)</label>
+          <input class="input" name="gjatesia" type="number" step="0.01" min="0.1" placeholder="3.00" required oninput="calcM2()">
+        </div>
+        <div>
+          <label class="label">Gjerësia (m)</label>
+          <input class="input" name="gjeresia" type="number" step="0.01" min="0.1" placeholder="2.00" required oninput="calcM2()">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div>
+          <label class="label">Çmimi / m²</label>
+          <input class="input" name="cmimi_per_m2" type="number" step="0.01" min="0" value="5.00" oninput="calcM2()">
+        </div>
+        <div>
+          <label class="label">Total m²</label>
+          <div id="m2-result" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-weight:700;font-size:16px;" class="mono">0.00 m²</div>
+        </div>
+      </div>
+      <div id="price-preview" style="background:var(--accent-soft);border:1px solid rgba(124,106,255,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:none;">
+        <span style="font-size:13px;color:var(--muted);">Çmimi total: </span>
+        <span id="price-total" style="font-weight:700;color:var(--accent);" class="mono"></span>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Regjistro Tepihun</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function calcM2() {
+  const g = parseFloat(document.querySelector('[name=gjatesia]').value) || 0;
+  const gj = parseFloat(document.querySelector('[name=gjeresia]').value) || 0;
+  const c = parseFloat(document.querySelector('[name=cmimi_per_m2]').value) || 0;
+  const m2 = (g * gj).toFixed(2);
+  const total = (g * gj * c).toFixed(2);
+  document.getElementById('m2-result').textContent = m2 + ' m²';
+  if (g > 0 && gj > 0) {
+    document.getElementById('price-preview').style.display = 'block';
+    document.getElementById('price-total').textContent = '€' + total;
+  }
+}
+</script>
+
+{% endblock %}

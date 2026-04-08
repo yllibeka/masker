@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{% if klient %}Edito Klientin{% else %}Klient i Ri{% endif %} — MISK ERP{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+  <a href="{{ url_for('klientet') }}" class="btn-ghost" style="padding:8px 14px;font-size:13px;">← Klientët</a>
+  <h1 style="font-size:24px;font-weight:700;margin:0;">{% if klient %}Edito Klientin{% else %}Klient i Ri{% endif %}</h1>
+</div>
+
+<div style="max-width:500px;">
+  <div class="card" style="padding:32px;">
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div>
+          <label class="label">Emri</label>
+          <input class="input" name="emri" value="{{ klient.emri if klient else '' }}" placeholder="Besmir" required>
+        </div>
+        <div>
+          <label class="label">Mbiemri</label>
+          <input class="input" name="mbiemri" value="{{ klient.mbiemri if klient else '' }}" placeholder="Hoxha" required>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="label">Numri i Telefonit</label>
+        <input class="input" name="telefoni" value="{{ klient.telefoni if klient else '' }}" placeholder="+383 44 123 456">
+      </div>
+      <div style="margin-bottom:28px;">
+        <label class="label">Adresa</label>
+        <input class="input" name="adresa" value="{{ klient.adresa if klient else '' }}" placeholder="Rr. Fehmi Agani, Prishtinë">
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button type="submit" class="btn-primary" style="flex:1;justify-content:center;">
+          {% if klient %}Ruaj Ndryshimet{% else %}Krijo Klientin{% endif %}
+        </button>
+        <a href="{{ url_for('klientet') }}" class="btn-ghost">Anulo</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
